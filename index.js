@@ -106,6 +106,15 @@ app.get("/connect", (req, res) => {
     document.getElementById('connect-whatsapp').onclick = function () {
       document.getElementById('status').innerText = 'Abriendo ventana de conexión...';
       FB.login(function (response) {
+        console.log('FB.login response:', response);
+        const debugDiv = document.getElementById('debug') || (function() {
+          const d = document.createElement('div');
+          d.id = 'debug';
+          d.style = 'margin-top:20px; text-align:left; background:#eee; padding:10px; border-radius:6px; font-size:12px; word-break:break-all;';
+          document.body.appendChild(d);
+          return d;
+        })();
+        debugDiv.innerHTML += '<p><b>FB.login response:</b> ' + JSON.stringify(response) + '</p>';
         if (response.authResponse) {
           document.getElementById('status').innerText = 'Sesión de Facebook confirmada. Sigue los pasos dentro de la ventana (número, código QR) hasta que se cierre sola.';
         } else {
@@ -127,16 +136,25 @@ app.get("/connect", (req, res) => {
     // (número, QR, perfil, términos) - no solo el login inicial.
     window.addEventListener('message', function (event) {
       if (!event.origin.endsWith('facebook.com')) return;
+      const debugDiv = document.getElementById('debug') || (function() {
+        const d = document.createElement('div');
+        d.id = 'debug';
+        d.style = 'margin-top:20px; text-align:left; background:#eee; padding:10px; border-radius:6px; font-size:12px; word-break:break-all;';
+        document.body.appendChild(d);
+        return d;
+      })();
+      debugDiv.innerHTML += '<p><b>Evento recibido:</b> ' + event.data + '</p>';
       try {
         const data = JSON.parse(event.data);
         if (data.type === 'WA_EMBEDDED_SIGNUP') {
           if (data.event === 'FINISH' || data.event === 'FINISH_ONLY_WABA' || data.event === 'FINISH_WHATSAPP_BUSINESS_APP_ONBOARDING') {
             document.getElementById('status').innerText = '✅ ¡Conexión completa de verdad! Ya puedes cerrar esta página.';
-            console.log('Datos de la conexión:', data.data);
           } else if (data.event === 'CANCEL') {
-            document.getElementById('status').innerText = 'Se canceló el proceso en el paso: ' + (data.data ? data.data.current_step : 'desconocido');
+            document.getElementById('status').innerText = 'Se canceló el proceso en el paso: ' + JSON.stringify(data.data);
           } else if (data.event === 'ERROR') {
-            document.getElementById('status').innerText = 'Error de Meta: ' + (data.data ? data.data.error_message : 'desconocido');
+            document.getElementById('status').innerText = 'Error de Meta: ' + JSON.stringify(data.data);
+          } else {
+            document.getElementById('status').innerText = 'Evento: ' + data.event + ' - ' + JSON.stringify(data.data);
           }
         }
       } catch (e) {

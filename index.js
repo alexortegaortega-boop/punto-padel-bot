@@ -68,5 +68,65 @@ async function enviarMensaje(to, texto) {
   });
 }
 
+// ---- Página de conexión (Coexistence) para que el dueño del negocio la abra desde su celular ----
+app.get("/connect", (req, res) => {
+  const APP_ID = process.env.META_APP_ID || "2118090739584715";
+  const CONFIG_ID = process.env.META_CONFIG_ID || ""; // lo pegamos aquí cuando lo tengamos
+
+  res.send(`<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Conectar WhatsApp - Punto Padel</title>
+  <style>
+    body { font-family: -apple-system, sans-serif; text-align: center; padding: 40px 20px; background: #f5f5f5; }
+    button { background: #25D366; color: white; border: none; padding: 16px 32px; font-size: 18px; border-radius: 8px; cursor: pointer; }
+    button:disabled { background: #ccc; }
+    #status { margin-top: 20px; color: #555; }
+  </style>
+</head>
+<body>
+  <h2>Conectar el bot con WhatsApp de Punto Padel</h2>
+  <p>Abre esta página desde el celular donde está instalada la app de WhatsApp Business del negocio, y dale click al botón.</p>
+  <button id="connect-whatsapp" disabled>Conectar WhatsApp</button>
+  <p id="status"></p>
+
+  <script>
+    window.fbAsyncInit = function () {
+      FB.init({
+        appId: '${APP_ID}',
+        autoLogAppEvents: true,
+        xfbml: true,
+        version: 'v21.0'
+      });
+      document.getElementById('connect-whatsapp').disabled = false;
+    };
+
+    document.getElementById('connect-whatsapp').onclick = function () {
+      document.getElementById('status').innerText = 'Abriendo ventana de conexión...';
+      FB.login(function (response) {
+        if (response.authResponse) {
+          document.getElementById('status').innerText = '¡Conectado! Ya puedes cerrar esta página.';
+        } else {
+          document.getElementById('status').innerText = 'Se canceló o no se completó la conexión.';
+        }
+      }, {
+        config_id: '${CONFIG_ID}',
+        response_type: 'code',
+        override_default_response_type: true,
+        extras: {
+          setup: {},
+          featureType: 'whatsapp_business_app_onboarding',
+          sessionInfoVersion: '3'
+        }
+      });
+    };
+  </script>
+  <script async defer crossorigin="anonymous" src="https://connect.facebook.net/es_LA/sdk.js"></script>
+</body>
+</html>`);
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Servidor corriendo en puerto ${PORT}`));
